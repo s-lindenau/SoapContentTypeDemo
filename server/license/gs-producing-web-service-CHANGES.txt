@@ -1,0 +1,15 @@
+https://github.com/spring-guides/gs-producing-web-service/blob/main/LICENSE.txt
+For original license see: gs-producing-web-service-LICENSE.txt
+-------------------------------------------------------------------------------
+Modifications to the original source code in this project:
+- Removed gradle and maven wrapper (mvnw)
+- Removed unit test package and dependencies
+- Refactored to package nl.slindenau
+- Added Content-Type filter classes in package nl.slindenau.soap.demo
+- Added FilterRegistrationBean<ContentTypeDemoFilter> in WebServiceConfig
+- Added application.properties with custom server.port
+- Updated POM.xml
+ - Added description + URL
+ - Changed name
+ - Changed groupid and artifactid
+ - Added properties
