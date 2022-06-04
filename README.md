@@ -41,7 +41,7 @@ You can run the server with the following command in the `server` project:
 The  SOAP service should then be available on `http://localhost:9097/ws/countries.wsdl`  
 On processing a request the original & rewritten content type of the response are logged to the console, see the following screenshot:
 
-<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server.PNG" target="_new"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server-thumb.PNG"/></a>
+<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server-thumb.PNG"/></a>
 
 ### The Client - JRE
 This is a basic client that uses the `jaxws-maven-plugin` to generate a model with the `wsimport` goal.  
@@ -65,7 +65,7 @@ In the console the full HTTP request + response are logged,
 this can be disabled in [CountriesSoapClient#setDebugProperties](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jre/src/main/java/nl/slindenau/soap/client/CountriesSoapClient.java#L29).
 See the following screenshot:
 
-<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre.PNG" target="_new"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre-thumb.PNG"/></a>
+<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre-thumb.PNG"/></a>
 
 *Note that there currently is no way to prevent this without changing the SOAP runtime, which will be shown in the next client.
 In theory the proposed solution in that client should be possible here as well, but that would require us to depend on- and extend internal JRE code. 
@@ -122,11 +122,11 @@ at com.sun.xml.ws.encoding.SOAPBindingCodec.decode(SOAPBindingCodec.java:289)
 
 But with our custom [HttpTransportPipe](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/HttpTransportPipeImpl.java#L41)
 we can now access the full HTTP response body, which would otherwise be lost (or only logged to the console):  
-<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1.PNG" target="_new"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1-thumb.PNG"/></a>
+<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1-thumb.PNG"/></a>
 
 And if we enable client-side content type rewrite in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java#L16)
 , we can process the request like nothing was wrong:  
-<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2.PNG" target="_new"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2-thumb.PNG"/></a>
+<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2-thumb.PNG"/></a>
 
 ### Support, Disclaimer and Contributing
 
