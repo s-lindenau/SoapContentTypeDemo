@@ -18,6 +18,15 @@ public class ContentTypeDemoFilter implements Filter {
     private static final String ORIGINAL_RESPONSE_CONTENT_TYPE = "text/xml";
     private static final String UPDATED_RESPONSE_CONTENT_TYPE = "application/soap+xml; charset=utf-8";
 
+    // Loop through the possible content types in order
+    private static int nextContentType;
+    private final String[] contentTypes = new String[]{
+            UPDATED_RESPONSE_CONTENT_TYPE,
+            "text/plain",
+            "text/html",
+            "application/json",
+            ORIGINAL_RESPONSE_CONTENT_TYPE};
+
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest request = (HttpServletRequest) req;
@@ -27,8 +36,8 @@ public class ContentTypeDemoFilter implements Filter {
         if (accept.contains(ORIGINAL_RESPONSE_CONTENT_TYPE)) {
             ContentTypeResponseWrapper wrapper = new ContentTypeResponseWrapper(response);
             // todo: for this Demo we're changing the correct content type for SOAP1.1 (text/xml)
-            //       to the incorrect value (application/soap+xml) which should only be used for SOAP1.2
-            wrapper.overrideContentType(UPDATED_RESPONSE_CONTENT_TYPE);
+            //       to multiple incorrect values (one is application/soap+xml, which should only be used for SOAP1.2)
+            wrapper.overrideContentType(contentTypes[(nextContentType++ % contentTypes.length)]);
             chain.doFilter(req, wrapper);
         } else {
             chain.doFilter(req, response);
