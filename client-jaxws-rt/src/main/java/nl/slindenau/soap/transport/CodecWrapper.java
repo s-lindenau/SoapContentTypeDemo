@@ -50,6 +50,8 @@ public class CodecWrapper implements Codec {
         return wrapped.encode(packet, out);
     }
 
+    // todo: encode is the outgoing request, might also be interesting for other use cases?
+
     @Override
     public ContentType encode(Packet packet, WritableByteChannel buffer) {
         return wrapped.encode(packet, buffer);
@@ -63,30 +65,43 @@ public class CodecWrapper implements Codec {
     @Override
     public void decode(InputStream in, String contentType, Packet response) throws IOException {
         this.responseStream = in;
-        wrapped.decode(in, processContentType(contentType), response);
+        String updatedContentType = processContentType(contentType, response);
+        wrapped.decode(in, updatedContentType, response);
     }
 
     @Override
     public void decode(ReadableByteChannel in, String contentType, Packet response) {
         this.responseChannel = in;
-        wrapped.decode(in, processContentType(contentType), response);
+        String updatedContentType = processContentType(contentType, response);
+        wrapped.decode(in, updatedContentType, response);
     }
 
-    private String processContentType(String contentType) {
+    private String processContentType(String contentType, Packet response) {
         System.out.println("[SOAP CONTENT TYPE DEMO] Response content type: " + contentType);
         if (isSOAPCodec() && ENABLE_CONTENT_TYPE_REWRITE) {
-            System.out.println("[SOAP CONTENT TYPE DEMO] Updated to content type: " + DEFAULT_SOAP11_CONTENT_TYPE);
+            String expectedContentType = getExpectedContentType(response, DEFAULT_SOAP11_CONTENT_TYPE);
+            System.out.println("[SOAP CONTENT TYPE DEMO] Updated to content type: " + expectedContentType);
             System.out.println();
             // todo: this is changed for every SOAP call that is executed on this Java runtime (in the same classloader)
             // todo: additional logic could be implemented here (perhaps based on endpoint URL via TransportTubeFactoryImpl,
             // todo: or check if we can access the SOAP version used, or the ACCEPT header in the HTTP request?)
-            return DEFAULT_SOAP11_CONTENT_TYPE;
+            return expectedContentType;
         }
         return contentType;
     }
 
     private boolean isSOAPCodec() {
         return wrapped instanceof com.sun.xml.ws.encoding.SOAPBindingCodec;
+    }
+
+    private String getExpectedContentType(Packet packet, String defaultContentType) {
+        // todo: this should return the expected content type for SOAP1.1 or SOAP1.2 based on com.sun.xml.ws.encoding.SOAPBindingCodec.getXMLCodec
+        // todo: but since the specific version subclasses of that codec are package private, we can't simply do an instanceof check
+        ContentType staticContentType = wrapped.getStaticContentType(packet);
+        if(staticContentType != null) {
+            return staticContentType.getContentType();
+        }
+        return defaultContentType;
     }
 
 }
