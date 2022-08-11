@@ -31,14 +31,14 @@ The server is set up with the following Spring guide:
 - https://github.com/spring-guides/gs-producing-web-service
 
 With the following modifications:
-- A Servlet Filter was added in [WebServiceConfig#contentTypeFilter](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/server/src/main/java/nl/slindenau/producingwebservice/WebServiceConfig.java#L46)
-- The content type is rewritten in [ContentTypeDemoFilter#doFilter](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/server/src/main/java/nl/slindenau/soap/demo/ContentTypeDemoFilter.java#L22)
-
+- A Servlet Filter was added in [WebServiceConfig](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/server/src/main/java/nl/slindenau/producingwebservice/WebServiceConfig.java)
+- The content type is rewritten in [ContentTypeDemoFilter](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/server/src/main/java/nl/slindenau/soap/demo/ContentTypeDemoFilter.java)
 
 You can run the server with the following command in the `server` project:
 - `mvn spring-boot:run`
 
 The  SOAP service should then be available on `http://localhost:9097/ws/countries.wsdl`  
+The code will loop through a set of different content types for the response in order.  
 On processing a request the original & rewritten content type of the response are logged to the console, see the following screenshot:
 
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server-thumb.PNG"/></a>
@@ -62,7 +62,7 @@ Exception in thread "main" com.sun.xml.internal.ws.server.UnsupportedMediaExcept
 	at com.sun.xml.internal.ws.transport.DeferredTransportPipe.processRequest(DeferredTransportPipe.java:95)
 ```
 In the console the full HTTP request + response are logged, 
-this can be disabled in [CountriesSoapClient#setDebugProperties](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jre/src/main/java/nl/slindenau/soap/client/CountriesSoapClient.java#L29).
+this can be disabled in [CountriesSoapClient#setDebugProperties](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jre/src/main/java/nl/slindenau/soap/client/CountriesSoapClient.java).
 See the following screenshot:
 
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jre-thumb.PNG"/></a>
@@ -73,7 +73,7 @@ This is a bad practice, and maven support for [system scope dependencies](https:
 did not work for me.*
 
 ### The Client - JAXWS-RT
-This client uses the exact same generated SOAP code as before, but with a different JAX-WS runtime.  
+This client uses the exact same generated SOAP code as the `client-jre` (so no modifications required), but with a different JAX-WS runtime.  
 By depending on the following libraries we can exchange the `internal` runtime for `jaxws-rt`.  
 Note that this runtime should be nearly identical and fully compatible with the internal code of the JRE, 
 but this now gives us the option to expand it.
@@ -100,17 +100,18 @@ Dependencies required to switch from internal SOAP processing to JAX-WS runtime:
 
 The part that rewrites the content type on this client is implemented via a custom `TransportTubeFactory` 
 that is loaded with [service discovery](https://www.javadoc.io/doc/com.sun.xml.ws/jaxws-rt/latest/com.sun.xml.ws/com/sun/xml/ws/api/pipe/TransportTubeFactory.html).
-Keep in mind that this factory is called for **every SOAP call** executed by clients in the current `ClassLoader` 
+Keep in mind that this factory is used for **every SOAP call** executed by clients in the current `ClassLoader` 
 (by default that is the entire application you're running in a single JRE process, unless you're using some form of container/isolation).
 
 By using a custom `HttpTransportPipe` and wrapping the `Codec` we can rewrite the content type just before the HTTP response is passed to the SOAP codec. 
 This works for most cases, except for `text/html`, which is [rejected](https://github.com/eclipse-ee4j/metro-jax-ws/blob/2.3.5/jaxws-ri/runtime/rt/src/main/java/com/sun/xml/ws/transport/http/client/HttpTransportPipe.java#L262) 
 earlier in the process by JAX-WS in more recent versions of the runtime library. If you need to process HTML consider using an older version of `jaxws-rt`.
+`jaxws-rt-2.1.7` is the last version that does not reject HTML right away, but beware this library is from 2009! You could also duplicate more code in the custom Transport tube or -pipe classes.
 
 You can run the client as follows:
 - Execute `mvn clean package` and run main class `nl.slindenau.Application` in project `client-jaxws-rt`
 
-If we do not rewrite the content type in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java#L16) 
+If we do not rewrite the content type in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java) 
 we get a similar exception as before, but note that the `internal` package is missing:
 
 ```
@@ -120,13 +121,21 @@ at com.sun.xml.ws.encoding.StreamSOAPCodec.decode(StreamSOAPCodec.java:136)
 at com.sun.xml.ws.encoding.SOAPBindingCodec.decode(SOAPBindingCodec.java:289)
 ```
 
-But with our custom [HttpTransportPipe](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/HttpTransportPipeImpl.java#L41)
+But with our custom [HttpTransportPipe](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/HttpTransportPipeImpl.java)
 we can now access the full HTTP response body, which would otherwise be lost (or only logged to the console):  
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-1-thumb.PNG"/></a>
 
-And if we enable client-side content type rewrite in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java#L16)
-, we can process the request like nothing was wrong:  
+And if we enable client-side content type rewrite in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java),
+we can process the request like nothing was wrong:  
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2-thumb.PNG"/></a>
+
+### The Client - JAXWS-RT-JRE17
+
+- [ ] todo: client with most recent version of each library, java 17
+
+### The Client - Apache-CXF
+
+- [ ] todo: different client code generator / runtime https://stackoverflow.com/a/50863434/18699445
 
 ### Support, Disclaimer and Contributing
 
