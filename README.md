@@ -135,7 +135,11 @@ we can process the request like nothing was wrong:
 
 ### The Client - Apache-CXF
 
-- [ ] todo: different client code generator / runtime https://stackoverflow.com/a/50863434/18699445
+This is an [Apache CXF](https://cxf.apache.org/) client that uses the `cxf-codegen-plugin` to generate a model with the `wsdl2java` goal.  
+It uses the Apache CXF custom SOAP processing code. The content-type filter of this code was inspired by https://stackoverflow.com/a/50863434/18699445
+
+You can run the client as follows: 
+- Execute `mvn clean package` and run main class `nl.slindenau.Application` in project `client-cxf`
 
 ### Support, Disclaimer and Contributing
 
