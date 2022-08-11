@@ -15,6 +15,7 @@ import java.io.IOException;
 public class ContentTypeDemoFilter implements Filter {
 
     private static final String ACCEPT_HEADER = "Accept";
+    private static final String ANY_RESPONSE_CONTENT_TYPE = "*/*";
     private static final String ORIGINAL_RESPONSE_CONTENT_TYPE = "text/xml";
     private static final String UPDATED_RESPONSE_CONTENT_TYPE = "application/soap+xml; charset=utf-8";
 
@@ -33,7 +34,7 @@ public class ContentTypeDemoFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) res;
 
         String accept = request.getHeader(ACCEPT_HEADER);
-        if (accept.contains(ORIGINAL_RESPONSE_CONTENT_TYPE)) {
+        if (accept.contains(ORIGINAL_RESPONSE_CONTENT_TYPE) || accept.contains(ANY_RESPONSE_CONTENT_TYPE)) {
             ContentTypeResponseWrapper wrapper = new ContentTypeResponseWrapper(response);
             // todo: for this Demo we're changing the correct content type for SOAP1.1 (text/xml)
             //       to multiple incorrect values (one is application/soap+xml, which should only be used for SOAP1.2)
