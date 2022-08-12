@@ -12,11 +12,14 @@ If there is a mismatch on this header, your Java client may respond with any of 
 - `UnsupportedMediaException: Unsupported Content-Type: text/xml; charset=utf-8 Supported ones are: [application/soap+xml]`
 - `UnsupportedMediaException: Unsupported Content-Type: text/plain;charset=ISO-8859-1 Supported ones are: [text/xml]`
 - `UnsupportedMediaException: Unsupported Content-Type: text/html Supported ones are: [text/xml]`
+- `ClientTransportException: The server sent HTTP status code 200: OK`
 - `etc`
 
 In this demonstration I have set up a SOAP v1.1 server that is responding with the content type of SOAP v1.2, 
 and several clients to showcase the `UnsupportedMediaException` and possible ways to deal with this exception.
 
+Your first action should be to inform the owner of the SOAP server, and report that there is a problem.  
+This project will showcase some workarounds you can apply to process the responses.  
 If you're looking for a solution without changing your code, a proxy server would be a good alternative.  
 See for reference: https://stackoverflow.com/a/65065756/18699445
 
@@ -39,6 +42,7 @@ You can run the server with the following command in the `server` project:
 
 The  SOAP service should then be available on `http://localhost:9097/ws/countries.wsdl`  
 The code will loop through a set of different content types for the response in order.  
+It is the intention to leave the server running, and then you can experiment with the different clients.  
 On processing a request the original & rewritten content type of the response are logged to the console, see the following screenshot:
 
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-server-thumb.PNG"/></a>
@@ -106,7 +110,8 @@ Keep in mind that this factory is used for **every SOAP call** executed by clien
 By using a custom `HttpTransportPipe` and wrapping the `Codec` we can rewrite the content type just before the HTTP response is passed to the SOAP codec. 
 This works for most cases, except for `text/html`, which is [rejected](https://github.com/eclipse-ee4j/metro-jax-ws/blob/2.3.5/jaxws-ri/runtime/rt/src/main/java/com/sun/xml/ws/transport/http/client/HttpTransportPipe.java#L262) 
 earlier in the process by JAX-WS in more recent versions of the runtime library. If you need to process HTML consider using an older version of `jaxws-rt`.
-`jaxws-rt-2.1.7` is the last version that does not reject HTML right away, but beware this library is from 2009! You could also duplicate more code in the custom Transport tube or -pipe classes.
+`jaxws-rt-2.1.7` is the last version that does not reject HTML right away, but beware this library is from 2009! You could also duplicate more code in the custom Transport tube or -pipe classes.  
+Note that the Apache CXF client (see below) does have the option to process HTML.
 
 You can run the client as follows:
 - Execute `mvn clean package` and run main class `nl.slindenau.Application` in project `client-jaxws-rt`
@@ -140,6 +145,24 @@ It uses the Apache CXF custom SOAP processing code. The content-type filter of t
 
 You can run the client as follows: 
 - Execute `mvn clean package` and run main class `nl.slindenau.Application` in project `client-cxf`
+
+This client will rewrite the content type with an `Interceptor`, and can even process `text/html`:  
+<a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-cxf.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-cxf-thumb.PNG"/></a>
+
+Without this interceptor, you would encounter the following exception:
+```
+Exception in thread "main" javax.xml.ws.soap.SOAPFaultException: Response was of unexpected text/html ContentType.  Incoming portion of HTML stream: <SOAP-ENV:Envelope...
+	at org.apache.cxf.jaxws.JaxWsClientProxy.mapException(JaxWsClientProxy.java:195)
+	at org.apache.cxf.jaxws.JaxWsClientProxy.invoke(JaxWsClientProxy.java:145)
+	at com.sun.proxy.$Proxy35.getCountry(Unknown Source)
+	at nl.slindenau.soap.client.CountriesSoapClient.getCountries(CountriesSoapClient.java:23)
+	at nl.slindenau.Application.main(Application.java:9)
+Caused by: org.apache.cxf.interceptor.Fault: Response was of unexpected text/html ContentType.  Incoming portion of HTML stream: <SOAP-ENV:Envelope...
+	at org.apache.cxf.interceptor.StaxInInterceptor.handleMessage(StaxInInterceptor.java:97)
+	at org.apache.cxf.phase.PhaseInterceptorChain.doIntercept(PhaseInterceptorChain.java:307)
+	at org.apache.cxf.endpoint.ClientImpl.onMessage(ClientImpl.java:829)
+	at org.apache.cxf.transport.http.HTTPConduit$WrappedOutputStream.handleResponseInternal(HTTPConduit.java:1701)
+```
 
 ### Support, Disclaimer and Contributing
 
