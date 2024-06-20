@@ -8,6 +8,16 @@ The expected content types for SOAP messages are as follows:
 - `text/xml` for SOAP v1.1
 - `application/soap+xml` for SOAP v1.2
 
+You can recognize the SOAP version of your project by looking at the following namespaces used:
+- In the WSDL:
+  - `http://schemas.xmlsoap.org/wsdl/soap/` for SOAP v1.1
+  - `http://schemas.xmlsoap.org/wsdl/soap12/` for SOAP v1.2
+- In the SOAP message envelope:
+  - `http://schemas.xmlsoap.org/soap/envelope/` for SOAP v1.1
+  - `http://www.w3.org/2003/05/soap-envelope/` for SOAP v1.2
+    
+See for reference: https://stackoverflow.com/q/736845/3756780
+
 If there is a mismatch on this header, your Java client may respond with any of the following exceptions: 
 - `UnsupportedMediaException: Unsupported Content-Type: text/xml; charset=utf-8 Supported ones are: [application/soap+xml]`
 - `UnsupportedMediaException: Unsupported Content-Type: text/plain;charset=ISO-8859-1 Supported ones are: [text/xml]`
@@ -133,10 +143,6 @@ we can now access the full HTTP response body, which would otherwise be lost (or
 And if we enable client-side content type rewrite in the [CodecWrapper](https://github.com/s-lindenau/SoapContentTypeDemo/blob/master/client-jaxws-rt/src/main/java/nl/slindenau/soap/transport/CodecWrapper.java),
 we can process the request like nothing was wrong:  
 <a href="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2.PNG" target="_blank"><img src="https://raw.githubusercontent.com/s-lindenau/SoapContentTypeDemo/master/blob/soap-client-jaxws-rt-2-thumb.PNG"/></a>
-
-### The Client - JAXWS-RT-JRE17
-
-- [ ] todo: client with most recent version of each library, java 17
 
 ### The Client - Apache-CXF
 
